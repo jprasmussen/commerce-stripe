@@ -6,3 +6,90 @@
  * to Commerce. Commerce Stripe offers a PCI-compliant way to process payments
  * straight from you Commerce shop.
  */
+
+define('STRIPE_PUBLIC_KEY', '');
+define('STRIPE_SECRET_KEY', '');
+
+/**
+ * Implements hook_commerce_payment_method_info().
+ */
+function commerce_stripe_commerce_payment_method_info() {
+  $payment_methods = array();
+
+  $payment_methods['commerce_stripe'] = array(
+    'title' => t('Stripe'),
+    'description' => t('Stripe payment gateway'),
+    'active' => TRUE,
+    'terminal' => FALSE,
+    'offsite' => TRUE,
+    'callbacks' => array(
+      'settings_form' => 'commerce_stripe_settings_form',
+    ),
+  );
+
+  return $payment_methods;
+}
+
+/**
+ * Payment method settings form.
+ *
+ * @param $settings
+ *   Default settings provided from rules
+*/
+function commerce_stripe_settings_form($settings) {
+  $form = array();
+  $form['public_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Publishable Key'),
+    '#description' => t('Publishable API Key'),
+    '#default_value' => !empty($settings['public_key']) ? $settings['public_key'] : STRIPE_PUBLIC_KEY,
+  );
+  $form['secret_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Secret Key'),
+    '#description' => t('Secret API Key'),
+    '#default_value' => !empty($settings['secret_key']) ? $settings['secret_key'] : STRIPE_SECRET_KEY,
+  );
+  
+  return $form;
+}
+
+/**
+ * Payment method callback: checkout form.
+ */
+function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  $form = commerce_payment_credit_card_form(array('number' => '', 'exp_month' => '', 'exp_year' => '', 'code' => ''));
+  
+  // Attach the javascript from Stripe.
+  $form['#attached']['js'] = array(
+    'https://js.stripe.com/v1/' => array(
+      'type' => 'external',
+    ),
+    drupal_get_path('module', 'stripe') . '/stripe.js',
+    // And set our key.
+    'jQuery(document).ready(function () { Stripe.setPublishableKey("' . _commerce_stripe_get_setting('public_key') . '"); });' => array(
+      'type' => 'inline', 'scope' => 'footer', 'weight' => 5
+    ),
+  );
+  return $form;
+}
+
+/**
+ * Return payment method settings
+ */
+function _commerce_stripe_get_setting($setting_name) {
+  $payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
+
+  switch($setting_name) {
+    // Secret key
+    case 'secret_key':
+      $setting = !empty($payment_method['settings']['secret_key']) ? $payment_method['settings']['secret_key'] : STRIPE_SECRET_KEY;
+    break;
+    // Publishable key
+    case 'public_key':
+      $setting = !empty($payment_method['settings']['public_key']) ? $payment_method['settings']['public_key'] : STRIPE_PUBLIC_KEY;
+    break;
+  }
+  return $setting;
+}
