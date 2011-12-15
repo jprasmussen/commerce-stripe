@@ -1,0 +1,7 @@
+name = Commerce Stripe
+description = Stripe payment gateway integration with Commerce
+core = 7.x
+dependencies[] = libraries
+files[] = commerce_stripe.admin.inc
+files[] = commerce_stripe.module
+files[] = commerce_stripe.install
