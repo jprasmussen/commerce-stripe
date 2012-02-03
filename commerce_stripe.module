@@ -21,7 +21,7 @@ function commerce_stripe_commerce_payment_method_info() {
     'description' => t('Stripe payment gateway'),
     'active' => TRUE,
     'terminal' => FALSE,
-    'offsite' => TRUE,
+    'offsite' => FALSE,
     'callbacks' => array(
       'settings_form' => 'commerce_stripe_settings_form',
     ),
@@ -58,21 +58,84 @@ function commerce_stripe_settings_form($settings) {
  * Payment method callback: checkout form.
  */
 function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+    
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
-  $form = commerce_payment_credit_card_form(array('number' => '', 'exp_month' => '', 'exp_year' => '', 'code' => ''));
+  $form = commerce_payment_credit_card_form(array('number' => '', 'exp_month' => '', 'exp_year' => '', 'code' => ''));  
   
-  // Attach the javascript from Stripe.
-  $form['#attached']['js'] = array(
-    'https://js.stripe.com/v1/' => array(
-      'type' => 'external',
-    ),
-    drupal_get_path('module', 'stripe') . '/stripe.js',
-    // And set our key.
-    'jQuery(document).ready(function () { Stripe.setPublishableKey("' . _commerce_stripe_get_setting('public_key') . '"); });' => array(
-      'type' => 'inline', 'scope' => 'footer', 'weight' => 5
+  // To display validation errors
+  $form['total'] = array(
+    '#type' => 'hidden',
+    '#value' => $order->commerce_order_total['und'][0]['amount'],
+    '#attributes' => array(
+      'name' => '',
+      'class' => array('stripe-order-total'),
     ),
   );
+  
+  // Load external libraries
+  $form['#attached']['js'] = array(
+    drupal_get_path('module', 'commerce_stripe') . '/stripe.v1.js',
+    drupal_get_path('module', 'commerce_stripe') . '/commerce_stripe.js',
+  );
+  
+  // And set our key.
+  $form['set_stripe_key'] = array(
+    '#type' => 'markup',
+    '#markup' => '<script>jQuery(document).ready(function () { Stripe.setPublishableKey("' . _commerce_stripe_get_setting('public_key') . '"); });</script>'
+  );
+  
+  // To display validation errors
+  $form['errors'] = array(
+    '#type' => 'markup',
+    '#markup' => "<div class='payment-errors'></div>",
+  );
+  
   return $form;
+}
+
+/**
+ * Payment method callback: checkout form submission.
+ */
+function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
+  
+  // Set stripe secret key
+  Stripe::setApiKey(_commerce_stripe_get_setting('secret_key'));  
+  
+  // Assemble charge parameters
+  $c = array(
+    'amount' => $charge['amount'],
+    'currency' => 'usd', //only 'usd' is supported
+    'card' => $_POST['stripeToken'],
+    'description' => 'Order Number: '.$order->order_number,
+  );  
+  
+  try{
+    $response = Stripe_Charge::create($c);    
+  } catch(Exception $e){
+    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
+    drupal_set_message(check_plain($e->getMessage()), 'error');
+    return FALSE;     
+  }
+  
+  // Prepare a transaction object to represent the transaction attempt.
+  $transaction = commerce_payment_transaction_new('stripe', $order->order_id);
+    
+  if($response->paid){
+    $transaction->instance_id = $payment_method['instance_id'];
+    $transaction->remote_id = $response[6];
+    $transaction->amount = $charge['amount'];
+    $transaction->currency_code = $charge['currency_code'];
+    $transaction->payload[REQUEST_TIME] = $response;
+    $transaction->message = "payment was accepted";
+    $transaction->status = COMMERCE_PAYMENT_STATUS_PENDING;
+  } else {
+    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
+    drupal_set_message(check_plain($response->card), 'error');
+    return FALSE;    
+  }
+  
+  // Save the transaction information.
+  commerce_payment_transaction_save($transaction);
 }
 
 /**
