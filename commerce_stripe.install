@@ -4,7 +4,7 @@
  * Implementation of hook_install().
  */
 function commerce_stripe_install() {
-  if(!file_exists(libraries_get_path('stripe') . '/Stripe.php')) {
+  if(!file_exists(libraries_get_path('stripe-php') . '/lib/Stripe.php')) {
     drupal_set_message(t('Stripe library missing. Download the Stripe library from https://github.com/stripe/stripe-php and place in in to sites/all/libraries/stripe-php'),'error');
   }
 }
