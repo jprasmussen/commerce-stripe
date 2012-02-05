@@ -10,4 +10,3 @@ dependencies[] = libraries
 files[] = commerce_stripe.module
 files[] = commerce_stripe.install
 files[] = commerce_stripe.js
-files[] = stripe.v1.js

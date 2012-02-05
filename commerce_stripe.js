@@ -1,4 +1,3 @@
-
 jQuery(document).ready(function() {
 
   jQuery("#commerce-checkout-form-review").submit(function(event) {
