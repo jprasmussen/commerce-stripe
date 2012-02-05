@@ -109,12 +109,12 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
     'amount' => $charge['amount'],
     'currency' => 'usd', //only 'usd' is supported
     'card' => $_POST['stripeToken'],
-    'description' => 'Order Number: '.$order->order_number,
+    'description' => 'Order Number: ' . $order->order_number,
   );  
   
   try{
     $response = Stripe_Charge::create($c);    
-  } catch(Exception $e){
+  } catch (Exception $e) {
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
     drupal_set_message(check_plain($e->getMessage()), 'error');
     watchdog('commerce_stripe', 'Following error received when processing card @stripe_error.', array('@stripe_error' => check_plain($e->getMessage())), WATCHDOG_NOTICE);
@@ -124,7 +124,7 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
   // Prepare a transaction object to represent the transaction attempt.
   $transaction = commerce_payment_transaction_new('commerce_stripe', $order->order_id);
     
-  if($response->paid){
+  if ($response->paid) {
     $transaction->instance_id = $payment_method['instance_id'];
     $transaction->remote_id = $response->id;
     $transaction->amount = $charge['amount'];
@@ -132,7 +132,8 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
     $transaction->payload[REQUEST_TIME] = $response;
     $transaction->message = "Payment completed successfully.";
     $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
-  } else {
+  } 
+  else {
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
     drupal_set_message(check_plain($response->card), 'error');
     watchdog('commerce_stripe', 'Following error received when processing card @stripe_error.', array('@stripe_error' => check_plain($response->card)), WATCHDOG_NOTICE);
@@ -149,7 +150,7 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
 function _commerce_stripe_get_setting($setting_name) {
   $payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
 
-  switch($setting_name) {
+  switch ($setting_name) {
     // Secret key
     case 'secret_key':
       $setting = !empty($payment_method['settings']['secret_key']) ? $payment_method['settings']['secret_key'] : STRIPE_SECRET_KEY;

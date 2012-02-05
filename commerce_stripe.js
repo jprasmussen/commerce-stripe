@@ -1,3 +1,8 @@
+/**
+ * @file
+ * Javascript to generate Stripe token in PCI-compliant way.
+ */
+
 jQuery(document).ready(function() {
 
   jQuery("#commerce-checkout-form-review").submit(function(event) {
