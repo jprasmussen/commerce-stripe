@@ -146,6 +146,9 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
 
 /**
  * Return payment method settings
+ *
+ * @param $setting_name
+  *   A string containing the setting name we are getting
  */
 function _commerce_stripe_get_setting($setting_name) {
   $payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
