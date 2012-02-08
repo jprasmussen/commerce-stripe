@@ -29,12 +29,13 @@ CONFIGURING PAYMENT METHOD
 
 2. Insert your API keys at the Stripe configuration page
    admin/commerce/config/payment-methods/manage/commerce_payment_commerce_stripe/
+   Remember to test the functionality with the test keys before going live!
 
 
 CREDITS
 -------
 
-Commerce Maksuturva integration has been written by Ilari Mäkelä and sponsored
+Commerce Stripe integration has been written by Ilari Mäkelä and sponsored
 by Mearra.
 
 http://drupal.org/user/726092/
