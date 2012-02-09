@@ -28,7 +28,7 @@ CONFIGURING PAYMENT METHOD
 1. Create an account at https://stripe.com/
 
 2. Insert your API keys at the Stripe configuration page
-   admin/commerce/config/payment-methods/manage/commerce_payment_commerce_stripe/
+   admin/commerce/config/payment-methods/manage/commerce_payment_commerce_stripe
    Remember to test the functionality with the test keys before going live!
 
 

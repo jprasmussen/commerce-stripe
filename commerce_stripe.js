@@ -6,13 +6,13 @@
 jQuery(document).ready(function() {
 
   jQuery("#commerce-checkout-form-review").submit(function(event) {
-    
+
     // prevent the form from submitting with the default action
     event.preventDefault();
-    
+
     // show progress animated gif (needed for submitting after first error)
     jQuery('.checkout-processing').show();
-    
+
     // disable the submit button to prevent repeated clicks
     jQuery('.form-submit').attr("disabled", "disabled");
 
@@ -27,7 +27,7 @@ jQuery(document).ready(function() {
     // prevent the form from submitting with the default action
     return false;
   });
-  
+
 });
 
 function stripeResponseHandler(status, response) {
@@ -35,7 +35,7 @@ function stripeResponseHandler(status, response) {
   if (response.error) {
     //show the errors on the form
     jQuery("div.payment-errors").html(jQuery("<div class='messages error'></div>").html(response.error.message));
-    
+
     // enable the submit button to allow resubmission
     jQuery('.form-submit').removeAttr("disabled");
     // hide progress animated gif
