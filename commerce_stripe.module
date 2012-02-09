@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file commerce_stripe.module
+ * @file
  * This module provides Stripe (http://stripe.com/) payment gateway integration
  * to Commerce. Commerce Stripe offers a PCI-compliant way to process payments
  * straight from you Commerce shop.

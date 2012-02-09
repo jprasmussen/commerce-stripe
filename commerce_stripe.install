@@ -1,6 +1,6 @@
 <?php
 /**
- * @file commerce_stripe.install
+ * @file
  * Contains install and update functions for Commerce Stripe.
  */
 
@@ -12,7 +12,7 @@ function commerce_stripe_install() {
     drupal_set_message(st('Stripe library missing. Download the Stripe library from https://github.com/stripe/stripe-php and place in in to sites/all/libraries/stripe-php'), 'error');
   }
 
-  if (commerce_default_currency()!='USD') {
+  if (commerce_default_currency() != 'USD') {
     drupal_set_message(st('Stripe currently supports only USD as a currency.'), 'error');
   }
 }
