@@ -35,8 +35,9 @@ function commerce_stripe_commerce_payment_method_info() {
  *
  * @param <type> $settings
  *   Default settings provided from rules
- * @return
- *   <array> settings form array
+ *
+ * @return <array>
+ *   settings form array
  */
 function commerce_stripe_settings_form($settings) {
   $form = array();
@@ -151,8 +152,9 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
  *
  * @param <type> $setting_name
  *   A string containing the setting name we are getting
- * @return
- *   <string> setting value
+ *
+ * @return <string>
+ *   setting value
  */
 function _commerce_stripe_get_setting($setting_name) {
   $payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
