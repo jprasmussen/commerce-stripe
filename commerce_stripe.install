@@ -23,3 +23,29 @@ function commerce_stripe_install() {
 function commerce_stripe_uninstall() {
   // Nothing here yet.
 }
+
+/**
+ * Implements hook_requirements().
+ */
+function commerce_stripe_requirements($phase) {
+  $requirements = array();
+
+  if ($phase == 'runtime') {
+    // Check for the Stripe PHP library.
+    if (file_exists(libraries_get_path('stripe-php') . '/lib/Stripe.php')) {
+      $requirements['commerce_stripe'] = array(
+        'value' => 'Installed',
+        'severity' => REQUIREMENT_OK,
+      );
+    }
+    else {
+      $requirements['commerce_stripe'] = array(
+        'value' => t('Missing!'), 
+        'severity' => REQUIREMENT_ERROR, 
+        'description' => t('Stripe library missing. Download the Stripe library from <a href="@url">https://github.com/stripe/stripe-php</a> and place in in to sites/all/libraries/stripe-php', array('@url' => 'https://github.com/stripe/stripe-php')),
+      );
+    }
+    $requirements['commerce_stripe']['title'] = t('Stripe PHP library');
+  }
+  return $requirements;
+}
