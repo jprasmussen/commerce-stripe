@@ -75,12 +75,13 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
     ),
   );
 
-  // And set our key to settings array.
+  // Set our key to settings array.
   drupal_add_js(array('stripe' => array('publicKey' => _commerce_stripe_get_setting('public_key'))), 'setting');
   
+  // Include the stripe.js from stripe.com.
   drupal_add_js('https://js.stripe.com/v1/', 'external');
   
-  // Load external libraries.
+  // Load commerce_stripe.js.
   $form['#attached']['js'] = array(
     drupal_get_path('module', 'commerce_stripe') . '/commerce_stripe.js',
   );
