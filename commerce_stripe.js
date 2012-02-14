@@ -7,9 +7,9 @@
   Drupal.behaviors.stripe = {
     attach: function (context, settings) {
       if (settings.stripe.fetched == null) {
+        settings.stripe.fetched = true;
+        
         $('#commerce-checkout-form-review').submit(function(event) {
-
-          settings.stripe.fetched = true;
         
           // Prevent the form from submitting with the default action.
           event.preventDefault();
