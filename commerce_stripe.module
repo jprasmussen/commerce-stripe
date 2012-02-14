@@ -75,16 +75,14 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
     ),
   );
 
+  // And set our key to settings array.
+  drupal_add_js(array('stripe' => array('publicKey' => _commerce_stripe_get_setting('public_key'))), 'setting');
+  
+  drupal_add_js('https://js.stripe.com/v1/', 'external');
+  
   // Load external libraries.
   $form['#attached']['js'] = array(
-    'https://js.stripe.com/v1/',
     drupal_get_path('module', 'commerce_stripe') . '/commerce_stripe.js',
-  );
-
-  // And set our key.
-  $form['set_stripe_key'] = array(
-    '#type' => 'markup',
-    '#markup' => '<script>jQuery(document).ready(function () { Stripe.setPublishableKey("' . _commerce_stripe_get_setting('public_key') . '"); });</script>',
   );
 
   // To display validation errors.
