@@ -8,9 +8,9 @@
     attach: function (context, settings) {
       if (settings.stripe.fetched == null) {
         settings.stripe.fetched = true;
-        
+
         $('#commerce-checkout-form-review').submit(function(event) {
-        
+
           // Prevent the form from submitting with the default action.
           event.preventDefault();
 
@@ -19,22 +19,22 @@
 
           // Disable the submit button to prevent repeated clicks.
           $('.form-submit').attr("disabled", "disabled");
-        
+
           Stripe.setPublishableKey(settings.stripe.publicKey);
-        
+
           Stripe.createToken({
             number: $('#edit-commerce-payment-payment-details-credit-card-number').val(),
             cvc: $('#edit-commerce-payment-payment-details-credit-card-code').val(),
             exp_month: $('#edit-commerce-payment-payment-details-credit-card-exp-month').val(),
             exp_year: $('#edit-commerce-payment-payment-details-credit-card-exp-year').val()
           }, Drupal.behaviors.stripe.stripeResponseHandler);
-        
+
           // Prevent the form from submitting with the default action.
           return false;
         });
       }
     },
-    
+
     stripeResponseHandler: function (status, response) {
       if (response.error) {
         // Show the errors on the form.
