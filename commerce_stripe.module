@@ -76,7 +76,7 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
   );
 
   // Set our key to settings array.
-  drupal_add_js(array('stripe' => array('publicKey' => _commerce_stripe_get_setting('public_key'))), 'setting');
+  drupal_add_js(array('stripe' => array('publicKey' => _commerce_stripe_get_key('public_key', $payment_method['settings']))), 'setting');
   
   // Include the stripe.js from stripe.com.
   drupal_add_js('https://js.stripe.com/v1/', 'external');
@@ -104,7 +104,7 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
   require_once libraries_get_path('stripe-php') . '/lib/Stripe.php';
 
   // Set stripe secret key.
-  Stripe::setApiKey(_commerce_stripe_get_setting('secret_key'));
+  Stripe::setApiKey(_commerce_stripe_get_key('secret_key', $payment_method['settings']));
 
   // Assemble charge parameters. Only 'usd' is supported.
   $c = array(
@@ -114,59 +114,51 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
     'description' => 'Order Number: ' . $order->order_number,
   );
 
-  try{
-    $response = Stripe_Charge::create($c);
-  } catch (Exception $e) {
-    drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(check_plain($e->getMessage()), 'error');
-    watchdog('commerce_stripe', 'Following error received when processing card @stripe_error.', array('@stripe_error' => check_plain($e->getMessage())), WATCHDOG_NOTICE);
-    return FALSE;
-  }
-
   // Prepare a transaction object to represent the transaction attempt.
   $transaction = commerce_payment_transaction_new('commerce_stripe', $order->order_id);
 
-  if ($response->paid) {
-    $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->instance_id = $payment_method['instance_id'];
+  $transaction->amount = $charge['amount'];
+  $transaction->currency_code = $charge['currency_code'];
+    
+  try {
+    $response = Stripe_Charge::create($c);
+    
     $transaction->remote_id = $response->id;
-    $transaction->amount = $charge['amount'];
-    $transaction->currency_code = $charge['currency_code'];
     $transaction->payload[REQUEST_TIME] = $response;
     $transaction->message = "Payment completed successfully.";
     $transaction->status = COMMERCE_PAYMENT_STATUS_SUCCESS;
+    
+    // Save the transaction information.
+    commerce_payment_transaction_save($transaction);
   }
-  else {
+  catch (Exception $e) {
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
-    drupal_set_message(check_plain($response->card), 'error');
-    watchdog('commerce_stripe', 'Following error received when processing card @stripe_error.', array('@stripe_error' => check_plain($response->card)), WATCHDOG_NOTICE);
+    drupal_set_message(check_plain($e->getMessage()), 'error');
+    watchdog('commerce_stripe', 'Following error received when processing card @stripe_error.', array('@stripe_error' => check_plain($e->getMessage())), WATCHDOG_NOTICE);
+    
+    $transaction->remote_id = $e->getHttpStatus();
+    $transaction->payload[REQUEST_TIME] = $e;
+    $transaction->message = 'Card processing error: ' .  check_plain($e->getMessage());
+    $transaction->status = COMMERCE_PAYMENT_STATUS_FAILURE;
+    commerce_payment_transaction_save($transaction);
+
     return FALSE;
   }
-
-  // Save the transaction information.
-  commerce_payment_transaction_save($transaction);
 }
 
 /**
  * Return payment method settings
  *
- * @param <type> $setting_name
- *   A string containing the setting name we are getting
+ * @param <type> $key
+ *   A string containing the key we are getting
+ * @param <type> $payment_method
+ *   Payment method
  *
- * @return <string>
- *   setting value
+ * @return <mixed>
+ *   Setting value
  */
-function _commerce_stripe_get_setting($setting_name) {
-  $payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
-
-  switch ($setting_name) {
-    // Secret key.
-    case 'secret_key':
-      $setting = !empty($payment_method['settings']['secret_key']) ? $payment_method['settings']['secret_key'] : STRIPE_SECRET_KEY;
-      break;
-    // Publishable key.
-    case 'public_key':
-      $setting = !empty($payment_method['settings']['public_key']) ? $payment_method['settings']['public_key'] : STRIPE_PUBLIC_KEY;
-      break;
-  }
-  return $setting;
+function _commerce_stripe_get_key($key = 'public_key', $payment_method) {
+  $key = $payment_method[$key];
+  return $key;
 }
