@@ -41,17 +41,17 @@ function commerce_stripe_commerce_payment_method_info() {
  */
 function commerce_stripe_settings_form($settings) {
   $form = array();
-  $form['public_key'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Publishable Key'),
-    '#description' => t('Publishable API Key. Get your key from https://stripe.com/'),
-    '#default_value' => !empty($settings['public_key']) ? $settings['public_key'] : STRIPE_PUBLIC_KEY,
-  );
   $form['secret_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Secret Key'),
     '#description' => t('Secret API Key. Get your key from https://stripe.com/'),
     '#default_value' => !empty($settings['secret_key']) ? $settings['secret_key'] : STRIPE_SECRET_KEY,
+  );
+  $form['public_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Publishable Key'),
+    '#description' => t('Publishable API Key. Get your key from https://stripe.com/'),
+    '#default_value' => !empty($settings['public_key']) ? $settings['public_key'] : STRIPE_PUBLIC_KEY,
   );
 
   return $form;
