@@ -19,7 +19,7 @@ function commerce_stripe_commerce_payment_method_info() {
   $payment_methods['commerce_stripe'] = array(
     'title' => t('Stripe'),
     'description' => t('Stripe payment gateway'),
-    'active' => TRUE,
+    'active' => FALSE,
     'terminal' => FALSE,
     'offsite' => FALSE,
     'callbacks' => array(
@@ -135,7 +135,7 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
   catch (Exception $e) {
     drupal_set_message(t('We received the following error processing your card. Please enter you information again or try a different card.'), 'error');
     drupal_set_message(check_plain($e->getMessage()), 'error');
-    watchdog('commerce_stripe', 'Following error received when processing card @stripe_error.', array('@stripe_error' => check_plain($e->getMessage())), WATCHDOG_NOTICE);
+    watchdog('commerce_stripe', t('Following error received when processing card @stripe_error.'), array('@stripe_error' => check_plain($e->getMessage())), WATCHDOG_NOTICE);
 
     $transaction->remote_id = $e->getHttpStatus();
     $transaction->payload[REQUEST_TIME] = $e;
