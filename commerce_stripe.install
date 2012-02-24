@@ -26,7 +26,7 @@ function commerce_stripe_requirements($phase) {
       );
     }
     $requirements['commerce_stripe_php']['title'] = get_t('Stripe PHP library');
-    
+
     // Check for Commerce currency.
     if (commerce_default_currency() == 'USD') {
       $requirements['commerce_stripe_currency'] = array(
