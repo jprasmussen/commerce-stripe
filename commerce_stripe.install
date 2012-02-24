@@ -31,7 +31,7 @@ function commerce_stripe_requirements($phase) {
     // Check for Commerce currency.
     if (commerce_default_currency() == 'USD') {
       $requirements['commerce_stripe_currency'] = array(
-        'value' => $t('Valid currency (USD).'),
+        'value' => $t('Valid currency (USD)'),
         'severity' => REQUIREMENT_OK,
       );
     }
