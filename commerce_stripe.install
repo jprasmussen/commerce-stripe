@@ -1,28 +1,8 @@
 <?php
 /**
  * @file
- * Contains install and update functions for Commerce Stripe.
+ * Contains requirements function for Commerce Stripe.
  */
-
-/**
- * Implements hook_install().
- */
-function commerce_stripe_install() {
-  if (!file_exists(libraries_get_path('stripe-php') . '/lib/Stripe.php')) {
-    drupal_set_message(st('Stripe library missing. Download the Stripe library from https://github.com/stripe/stripe-php and place in in to sites/all/libraries/stripe-php'), 'error');
-  }
-
-  if (commerce_default_currency() != 'USD') {
-    drupal_set_message(st('Stripe currently supports only USD as a currency.'), 'error');
-  }
-}
-
-/**
- * Implements hook_uninstall().
- */
-function commerce_stripe_uninstall() {
-  // Nothing here yet.
-}
 
 /**
  * Implements hook_requirements().
@@ -33,19 +13,35 @@ function commerce_stripe_requirements($phase) {
   if ($phase == 'runtime') {
     // Check for the Stripe PHP library.
     if (file_exists(libraries_get_path('stripe-php') . '/lib/Stripe.php')) {
-      $requirements['commerce_stripe'] = array(
-        'value' => 'Installed',
+      $requirements['commerce_stripe_php'] = array(
+        'value' => get_t('Installed'),
         'severity' => REQUIREMENT_OK,
       );
     }
     else {
-      $requirements['commerce_stripe'] = array(
-        'value' => t('Missing!'),
+      $requirements['commerce_stripe_php'] = array(
+        'value' => get_t('Missing!'),
         'severity' => REQUIREMENT_ERROR,
-        'description' => t('Stripe library missing. Download the Stripe library from <a href="@url">https://github.com/stripe/stripe-php</a> and place in in to sites/all/libraries/stripe-php', array('@url' => 'https://github.com/stripe/stripe-php')),
+        'description' => get_t('Stripe library missing. Download the Stripe library from <a href="@url">https://github.com/stripe/stripe-php</a> and place in in to sites/all/libraries/stripe-php', array('@url' => 'https://github.com/stripe/stripe-php')),
       );
     }
-    $requirements['commerce_stripe']['title'] = t('Stripe PHP library');
+    $requirements['commerce_stripe_php']['title'] = get_t('Stripe PHP library');
+    
+    // Check for Commerce currency.
+    if (commerce_default_currency() == 'USD') {
+      $requirements['commerce_stripe_currency'] = array(
+        'value' => get_t('Valid currency (USD).'),
+        'severity' => REQUIREMENT_OK,
+      );
+    }
+    else {
+      $requirements['commerce_stripe_currency'] = array(
+        'value' => get_t('Invalid default currency!'),
+        'severity' => REQUIREMENT_ERROR,
+        'description' => get_t('Stripe currently supports only USD as a currency.'),
+      );
+    }
+    $requirements['commerce_stripe_currency']['title'] = get_t('Stripe currency check');
   }
   return $requirements;
 }
