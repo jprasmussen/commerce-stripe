@@ -33,11 +33,11 @@ function commerce_stripe_commerce_payment_method_info() {
 /**
  * Payment method settings form.
  *
- * @param <type> $settings
+ * @param $settings
  *   Default settings provided from rules
  *
- * @return <array>
- *   settings form array
+ * @return array
+ *   Settings form array
  */
 function commerce_stripe_settings_form($settings) {
   $form = array();
