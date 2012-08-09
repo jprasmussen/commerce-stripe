@@ -11,26 +11,29 @@
 
         $('#commerce-checkout-form-checkout, #commerce-checkout-form-review').submit(function(event) {
 
-          // Prevent the form from submitting with the default action.
-          event.preventDefault();
+          // Prevent the Stripe actions to be triggered if Stripe is not selected.
+		      if($("input[@name=commerce_payment[payment_method]]:checked").val() == 'commerce_stripe|commerce_payment_commerce_stripe') {
+            // Prevent the form from submitting with the default action.
+            event.preventDefault();
 
-          // Show progress animated gif (needed for submitting after first error).
-          $('.checkout-processing').show();
+            // Show progress animated gif (needed for submitting after first error).
+            $('.checkout-processing').show();
 
-          // Disable the submit button to prevent repeated clicks.
-          $('.form-submit').attr("disabled", "disabled");
+            // Disable the submit button to prevent repeated clicks.
+            $('.form-submit').attr("disabled", "disabled");
 
-          Stripe.setPublishableKey(settings.stripe.publicKey);
+            Stripe.setPublishableKey(settings.stripe.publicKey);
 
-          Stripe.createToken({
-            number: $('#edit-commerce-payment-payment-details-credit-card-number').val(),
-            cvc: $('#edit-commerce-payment-payment-details-credit-card-code').val(),
-            exp_month: $('#edit-commerce-payment-payment-details-credit-card-exp-month').val(),
-            exp_year: $('#edit-commerce-payment-payment-details-credit-card-exp-year').val()
-          }, Drupal.behaviors.stripe.stripeResponseHandler);
+            Stripe.createToken({
+              number: $('[id^=edit-commerce-payment-payment-details-credit-card-number]').val(),
+              cvc: $('[id^=edit-commerce-payment-payment-details-credit-card-code]').val(),
+              exp_month: $('[id^=edit-commerce-payment-payment-details-credit-card-exp-month]').val(),
+              exp_year: $('[id^=edit-commerce-payment-payment-details-credit-card-exp-year]').val()
+            }, Drupal.behaviors.stripe.stripeResponseHandler);
 
-          // Prevent the form from submitting with the default action.
-          return false;
+            // Prevent the form from submitting with the default action.
+            return false;
+          }
         });
       }
     },
