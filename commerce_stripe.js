@@ -9,7 +9,7 @@
       if (settings.stripe.fetched == null) {
         settings.stripe.fetched = true;
 
-        $('#commerce-checkout-form-review').submit(function(event) {
+        $('#commerce-checkout-form-checkout, #commerce-checkout-form-review').submit(function(event) {
 
           // Prevent the form from submitting with the default action.
           event.preventDefault();
@@ -46,7 +46,7 @@
         $('.checkout-processing').hide();
       }
       else {
-        var form$ = $("#commerce-checkout-form-review");
+        var form$ = $("#commerce-checkout-form-checkout, #commerce-checkout-form-review");
         // Token contains id, last4, and card type.
         var token = response['id'];
         // Insert the token into the form so it gets submitted to the server.
