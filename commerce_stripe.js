@@ -12,7 +12,7 @@
         $('#commerce-checkout-form-checkout, #commerce-checkout-form-review').submit(function(event) {
 
           // Prevent the Stripe actions to be triggered if Stripe is not selected.
-		      if($("input[@name=commerce_payment[payment_method]]:checked").val() == 'commerce_stripe|commerce_payment_commerce_stripe') {
+		      if ($('#edit-commerce-payment-payment-method-commerce-stripecommerce-payment-commerce-stripe').is(':checked')) {
             // Prevent the form from submitting with the default action.
             event.preventDefault();
 
