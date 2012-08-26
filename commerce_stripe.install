@@ -23,7 +23,7 @@ function commerce_stripe_requirements($phase) {
       $requirements['commerce_stripe_php'] = array(
         'value' => $t('Missing!'),
         'severity' => REQUIREMENT_ERROR,
-        'description' => $t('Stripe library missing. Download the Stripe library from <a href="@url">https://github.com/stripe/stripe-php</a> and place in in to sites/all/libraries/stripe-php', array('@url' => 'https://github.com/stripe/stripe-php')),
+        'description' => $t('Stripe library missing. Download the Stripe library from <a href="@url">https://github.com/stripe/stripe-php</a> and place it in to sites/all/libraries/stripe-php', array('@url' => 'https://github.com/stripe/stripe-php')),
       );
     }
     $requirements['commerce_stripe_php']['title'] = $t('Stripe PHP library');
