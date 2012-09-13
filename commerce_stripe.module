@@ -41,6 +41,16 @@ function commerce_stripe_commerce_payment_method_info() {
  */
 function commerce_stripe_settings_form($settings) {
   $form = array();
+  $form['stripe_currency'] = array(
+    '#type' => 'select',
+    '#title' => t('Currency'),
+    '#options' => array(
+      'USD' => t('USD'),
+      'CAD' => t('CAD'),
+    ),
+    '#description' => t('Select the currency that you are using.'),
+    '#default_value' => !empty($settings['stripe_currency']) ? $settings['stripe_currency'] : 'USD',
+  );
   $form['secret_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Secret Key'),
@@ -112,10 +122,10 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
   // Set stripe secret key.
   Stripe::setApiKey($payment_method['settings']['secret_key']);
 
-  // Assemble charge parameters. Only 'usd' is supported.
+  // Assemble charge parameters.
   $c = array(
     'amount' => $charge['amount'],
-    'currency' => 'usd',
+    'currency' => $payment_method['settings']['stripe_currency'],
     'card' => $_POST['stripeToken'],
     'description' => t('Order Number: @order_number', array('@order_number' => $order->order_number)),
   );
