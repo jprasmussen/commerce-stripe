@@ -74,6 +74,7 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
   $form = commerce_payment_credit_card_form(
     array(
+      'owner' => '',
       'number' => '',
       'exp_month' => '',
       'exp_year' => '',

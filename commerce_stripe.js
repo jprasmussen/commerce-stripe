@@ -28,7 +28,8 @@
               number: $('[id^=edit-commerce-payment-payment-details-credit-card-number]').val(),
               cvc: $('[id^=edit-commerce-payment-payment-details-credit-card-code]').val(),
               exp_month: $('[id^=edit-commerce-payment-payment-details-credit-card-exp-month]').val(),
-              exp_year: $('[id^=edit-commerce-payment-payment-details-credit-card-exp-year]').val()
+              exp_year: $('[id^=edit-commerce-payment-payment-details-credit-card-exp-year]').val(),
+              name: $('[id^=edit-commerce-payment-payment-details-credit-card-owner]').val()
             }, Drupal.behaviors.stripe.stripeResponseHandler);
 
             // Prevent the form from submitting with the default action.
