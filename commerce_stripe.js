@@ -9,7 +9,9 @@
       if (settings.stripe.fetched == null) {
         settings.stripe.fetched = true;
 
-        $('#commerce-checkout-form-checkout, #commerce-checkout-form-review').submit(function(event) {
+        $('#commerce-checkout-form-checkout #edit-continue, #commerce-checkout-form-review #edit-continue').click(function(event) {
+
+          $(this).addClass('auth-processing');
 
           // Prevent the Stripe actions to be triggered if Stripe is not selected.
 		      if ($('#edit-commerce-payment-payment-method-commerce-stripecommerce-payment-commerce-stripe').is(':checked')) {
@@ -41,6 +43,8 @@
 
     stripeResponseHandler: function (status, response) {
       if (response.error) {
+        $(this).removeClass('auth-processing');
+
         // Show the errors on the form.
         $("div.payment-errors").html($("<div class='messages error'></div>").html(response.error.message));
 
@@ -55,6 +59,9 @@
         var token = response['id'];
         // Insert the token into the form so it gets submitted to the server.
         form$.append("<input type='hidden' name='stripeToken' value='" + token + "'/>");
+        $btnTrigger = $('.form-submit.auth-processing').eq(0);
+        var trigger$ = $("<input type='hidden' />").attr('name', $btnTrigger.attr('name')).attr('value', $btnTrigger.attr('value'));
+        form$.append(trigger$);
         // And submit.
         form$.get(0).submit();
       }
