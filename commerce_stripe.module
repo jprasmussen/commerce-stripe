@@ -17,7 +17,7 @@ function commerce_stripe_commerce_payment_method_info() {
   $payment_methods = array();
 
   $payment_methods['commerce_stripe'] = array(
-    'title' => t('Stripe'),
+    'title' => _commerce_stripe_load_setting('display_title', t('Stripe')),
     'description' => t('Stripe payment gateway'),
     'active' => FALSE,
     'terminal' => FALSE,
@@ -64,6 +64,12 @@ function commerce_stripe_settings_form($settings) {
     '#description' => t('Publishable API Key. Get your key from https://stripe.com/'),
     '#default_value' => !empty($settings['public_key']) ? $settings['public_key'] : STRIPE_PUBLIC_KEY,
     '#required' => TRUE,
+  );
+  $form['display_title'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Payment method display title'),
+    '#description' => t('Payment method display title'),
+    '#default_value' => !empty($settings['display_title']) ? $settings['display_title'] : t('Stripe'),
   );
 
   return $form;
@@ -175,18 +181,35 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
  */
 function commerce_stripe_commerce_payment_method_info_alter(&$payment_methods) {
   if (isset($payment_methods['commerce_stripe'])) {
-    $commerce_stripe_payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
+    $settings = _commerce_stripe_load_settings();
 
-    if (isset($commerce_stripe_payment_method)) {
-      $settings = $commerce_stripe_payment_method['settings'];
+    if (empty($settings['secret_key']) || empty($settings['public_key'])) {
+      unset($payment_methods['commerce_stripe']);
 
-      if (empty($settings['secret_key']) || empty($settings['public_key'])) {
-        unset($payment_methods['commerce_stripe']);
-
-        if (user_access('administer payment methods')) {
-          drupal_set_message('Stripe secret and public key are required in order to use Stripe payment method. See README.txt for instructions.', 'warning');
-        }
+      if (user_access('administer payment methods')) {
+        drupal_set_message('Stripe secret and public key are required in order to use Stripe payment method. See README.txt for instructions.', 'warning');
       }
     }
   }
+}
+
+function _commerce_stripe_load_settings() {
+  static $settings = array();
+
+  if (!empty($settings)) {
+    return $settings;
+  }
+
+  $commerce_stripe_payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
+
+  if (isset($commerce_stripe_payment_method)) {
+    $settings = $commerce_stripe_payment_method['settings'];
+  }
+
+  return $settings;
+}
+
+function _commerce_stripe_load_setting($name, $default_value = NULL) {
+  $settings = _commerce_stripe_load_settings();
+  return isset($settings[$name]) ? $settings[$name] : $default_value;
 }
