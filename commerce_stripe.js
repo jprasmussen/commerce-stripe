@@ -62,6 +62,13 @@
         $btnTrigger = $('.form-submit.auth-processing').eq(0);
         var trigger$ = $("<input type='hidden' />").attr('name', $btnTrigger.attr('name')).attr('value', $btnTrigger.attr('value'));
         form$.append(trigger$);
+        
+        $('[id^=edit-commerce-payment-payment-details-credit-card-number]').removeAttr('name');
+        $('[id^=edit-commerce-payment-payment-details-credit-card-code]').removeAttr('name');
+        $('[id^=edit-commerce-payment-payment-details-credit-card-exp-month]').removeAttr('name');
+        $('[id^=edit-commerce-payment-payment-details-credit-card-exp-year]').removeAttr('name');
+        $('[id^=edit-commerce-payment-payment-details-credit-card-owner]').removeAttr('name');
+        
         // And submit.
         form$.get(0).submit();
       }

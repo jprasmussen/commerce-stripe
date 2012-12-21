@@ -183,48 +183,6 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
 }
 
 /**
- * Implements hook_theme_registry_alter().
- *
- * Overrides theme_textfield() and theme_select() to remove name attribute from
- * Stripe related input elements to prevent them to be posted to Drupal server.
- * See https://stripe.com/docs/tutorials/forms for details.
- */
-function commerce_stripe_theme_registry_alter(&$theme_registry) {
-  $theme_registry['select']['function'] = 'commerce_stripe_theme_select';
-  $theme_registry['textfield']['function'] = 'commerce_stripe_theme_textfield';
-}
-
-function commerce_stripe_theme_select($variables) {
-  _commerce_stripe_remove_name_attribute_from_stripe_input_elements($variables);
-  return theme_select($variables);
-}
-
-function commerce_stripe_theme_textfield($variables) {
-  _commerce_stripe_remove_name_attribute_from_stripe_input_elements($variables);
-  return theme_textfield($variables);
-}
-
-function _commerce_stripe_remove_name_attribute_from_stripe_input_elements(&$variables) {
-  foreach ($variables as $element) {
-    if (_commerce_stripe_is_stripe_input_element($element)) {
-      unset($variables['element']['#name']);
-    }
-  }
-}
-
-function _commerce_stripe_is_stripe_input_element($element) {
-  return isset($element['#attributes']['class'])
-    && in_array('stripe', $element['#attributes']['class'])
-    && in_array($element['#id'], array(
-      'edit-commerce-payment-payment-details-credit-card-number',
-      'edit-commerce-payment-payment-details-credit-card-code',
-      'edit-commerce-payment-payment-details-credit-card-exp-month',
-      'edit-commerce-payment-payment-details-credit-card-exp-year',
-      'edit-commerce-payment-payment-details-credit-card-owner',
-    ));
-}
-
-/**
  * Implements hook_commerce_payment_method_info_alter().
  *
  * Hides Stripe payment method from payment methods form if Stripe private and
