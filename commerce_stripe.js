@@ -9,12 +9,12 @@
       if (settings.stripe.fetched == null) {
         settings.stripe.fetched = true;
 
-        $('#commerce-checkout-form-checkout #edit-continue, #commerce-checkout-form-review #edit-continue').click(function(event) {
-
-          $(this).addClass('auth-processing');
+        $('#commerce-checkout-form-checkout #edit-continue, #commerce-checkout-form-review #edit-continue').live('click', function(event) {
 
           // Prevent the Stripe actions to be triggered if Stripe is not selected.
-		      if ($('#edit-commerce-payment-payment-method-commerce-stripecommerce-payment-commerce-stripe').is(':checked')) {
+          if ($('#edit-commerce-payment-payment-method-commerce-stripecommerce-payment-commerce-stripe').is(':checked')) {
+            $(this).addClass('auth-processing');
+
             // Prevent the form from submitting with the default action.
             event.preventDefault();
 
