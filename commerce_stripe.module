@@ -185,17 +185,14 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
 /**
  * Implements hook_commerce_payment_method_info_alter().
  *
- * Hides Stripe payment method from payment methods form if Stripe private and
- * public keys are not set. Displays a warning if the user has permission to
- * administer payment methods.
+ * Displays a warning if Stripe private and public keys are not set and the
+ * user has permission to administer payment methods.
  */
 function commerce_stripe_commerce_payment_method_info_alter(&$payment_methods) {
   if (isset($payment_methods['commerce_stripe'])) {
     $settings = _commerce_stripe_load_settings();
 
     if (empty($settings['secret_key']) || empty($settings['public_key'])) {
-      unset($payment_methods['commerce_stripe']);
-
       if (user_access('administer payment methods')) {
         drupal_set_message('Stripe secret and public key are required in order to use Stripe payment method. See README.txt for instructions.', 'warning');
       }
@@ -210,7 +207,9 @@ function _commerce_stripe_load_settings() {
     return $settings;
   }
 
-  $commerce_stripe_payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
+  if (commerce_payment_method_load('commerce_stripe') && rules_config_load('commerce_payment_commerce_stripe')) {
+    $commerce_stripe_payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
+  }
 
   if (isset($commerce_stripe_payment_method)) {
     $settings = $commerce_stripe_payment_method['settings'];
