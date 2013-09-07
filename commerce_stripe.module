@@ -67,8 +67,10 @@ function commerce_stripe_settings_form($settings) {
     '#type' => 'select',
     '#title' => t('Currency'),
     '#options' => array(
-      'USD' => t('USD'),
       'CAD' => t('CAD'),
+      'EUR' => t('EUR'),
+      'GBP' => t('BGP'),
+      'USD' => t('USD'),
     ),
     '#description' => t('Select the currency that you are using.'),
     '#default_value' => !empty($settings['stripe_currency']) ? $settings['stripe_currency'] : 'USD',

@@ -29,7 +29,7 @@ function commerce_stripe_requirements($phase) {
     $requirements['commerce_stripe_php']['title'] = $t('Stripe PHP library');
 
     // Check for Commerce currency.
-    if (in_array(commerce_default_currency(), array('USD', 'CAD'))) {
+    if (in_array(commerce_default_currency(), array('USD', 'CAD', 'EUR', 'GBP'))) {
       $requirements['commerce_stripe_currency'] = array(
         'value' => $t('Valid currency'),
         'severity' => REQUIREMENT_OK,
