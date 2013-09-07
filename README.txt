@@ -35,8 +35,6 @@ CONFIGURING PAYMENT METHOD
 CREDITS
 -------
 
-Commerce Stripe integration has been written by Ilari Mäkelä and sponsored
-by Mearra.
+Commerce Stripe integration has been written by Ilari Mäkelä.
 
 http://drupal.org/user/726092/
-http://mearra.com/
