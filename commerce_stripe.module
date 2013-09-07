@@ -11,6 +11,28 @@ define('STRIPE_PUBLIC_KEY', '');
 define('STRIPE_SECRET_KEY', '');
 
 /**
+ * Implements hook_libraries_info().
+ */
+function commerce_stripe_libraries_info() {
+  return array(
+    'stripe-php' => array(
+      'name' => 'Stripe API Client Library for PHP',
+      'vendor url' => 'https://stripe.com/',
+      'download url' => 'https://github.com/stripe/stripe-php',
+      'version arguments' => array(
+        'file' => 'VERSION',
+        'pattern' => '/(\d+\.\d+(\.\d+)?)/',
+      ),
+      'files' => array(
+        'php' => array(
+          'lib/Stripe.php',
+        ),
+      ),
+    ),
+  );
+}
+
+/**
  * Implements hook_commerce_payment_method_info().
  */
 function commerce_stripe_commerce_payment_method_info() {
@@ -136,7 +158,13 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
 function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_values, $order, $charge) {
 
   // Require needed Stripe library.
-  require_once libraries_get_path('stripe-php') . '/lib/Stripe.php';
+  $name = "stripe-php";
+  // Try to load the library and check if that worked.
+  if (!($library = libraries_load($name)) || empty($library['loaded'])) {
+    watchdog('commerce_stripe', 'Failure to load Stripe API PHP Client Library.', array(), WATCHDOG_CRITICAL);
+    drupal_set_message(t('Error making the payment. Please contact shop admin to proceed.'), 'error');
+    return FALSE;
+  }
 
   // Set stripe secret key.
   Stripe::setApiKey($payment_method['settings']['secret_key']);
