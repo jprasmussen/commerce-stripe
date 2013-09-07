@@ -230,7 +230,7 @@ function commerce_stripe_commerce_payment_method_info_alter(&$payment_methods) {
   }
 }
 
-function _commerce_stripe_load_settings() {
+function _commerce_stripe_load_settings($name = NULL) {
   static $settings = array();
 
   if (!empty($settings)) {
@@ -238,6 +238,10 @@ function _commerce_stripe_load_settings() {
   }
 
   if (commerce_payment_method_load('commerce_stripe') && rules_config_load('commerce_payment_commerce_stripe')) {
+    $commerce_stripe_payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
+  }
+  
+  if (isset($name) && rules_config_load('commerce_payment_commerce_stripe')) {
     $commerce_stripe_payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
   }
 
@@ -249,6 +253,6 @@ function _commerce_stripe_load_settings() {
 }
 
 function _commerce_stripe_load_setting($name, $default_value = NULL) {
-  $settings = _commerce_stripe_load_settings();
+  $settings = _commerce_stripe_load_settings($name);
   return isset($settings[$name]) ? $settings[$name] : $default_value;
 }
