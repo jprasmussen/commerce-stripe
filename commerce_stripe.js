@@ -13,6 +13,13 @@
 
           // Prevent the Stripe actions to be triggered if Stripe is not selected.
           if ($('#edit-commerce-payment-payment-method-commerce-stripecommerce-payment-commerce-stripe').is(':checked')) {
+            // Do not fetch the token if cardonfile is enabled and the customer has selected an existing card.
+            if ($('.form-item-commerce-payment-payment-details-cardonfile').length > 0 &&
+              $("input[type='radio'][name='commerce_payment[payment_details][cardonfile]']:checked").val() != 'new') {
+
+              return;
+            }
+
             $(this).addClass('auth-processing');
 
             // Prevent the form from submitting with the default action.
@@ -71,7 +78,7 @@
         $('[id^=edit-commerce-payment-payment-details-credit-card-exp-month]').removeAttr('name');
         $('[id^=edit-commerce-payment-payment-details-credit-card-exp-year]').removeAttr('name');
         $('[id^=edit-commerce-payment-payment-details-credit-card-owner]').removeAttr('name');
-        
+
         // And submit.
         form$.get(0).submit();
       }
