@@ -296,9 +296,7 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
     $card_data->instance_id = $payment_method['instance_id'];
     $card_data->remote_id = $remote_id;
     $card_data->card_type = $response->card->type;
-    // @TODO - Either use billing address name, or configure javascript to allow the card owner name to reach Drupal.
-    // $card_data->card_name = !empty($billing_address['name_line']) ? $billing_address['name_line'] : '';
-    $card_data->card_name = '';
+    $card_data->card_name = $response->card->name;
     $card_data->card_number = $response->card->last4;
     $card_data->card_exp_month = $response->card->exp_month;
     $card_data->card_exp_year = $response->card->exp_year;
