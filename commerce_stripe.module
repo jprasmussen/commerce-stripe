@@ -211,7 +211,7 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
       try {
         $customer = Stripe_Customer::create(array(
           'card' => $_POST['stripeToken'],
-          'description' => $account->mail,
+          'email' => $account->mail,
         ));
         $stripe_customer_id = $customer->id;
         // Use the newly created customer id for the subsequent charge request.
