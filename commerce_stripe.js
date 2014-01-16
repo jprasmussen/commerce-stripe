@@ -92,15 +92,6 @@
         var trigger$ = $("<input type='hidden' />").attr('name', $btnTrigger.attr('name')).attr('value', $btnTrigger.attr('value'));
         form$.append(trigger$);
 
-        // Remove "name" attributes from Stripe related input elements to
-        // prevent card data to be sent to Drupal server
-        // (see https://stripe.com/docs/tutorials/forms)
-        $('[id^=edit-commerce-payment-payment-details-credit-card-number]').removeAttr('name');
-        $('[id^=edit-commerce-payment-payment-details-credit-card-code]').removeAttr('name');
-        $('[id^=edit-commerce-payment-payment-details-credit-card-exp-month]').removeAttr('name');
-        $('[id^=edit-commerce-payment-payment-details-credit-card-exp-year]').removeAttr('name');
-        $('[id^=edit-commerce-payment-payment-details-credit-card-owner]').removeAttr('name');
-
         // And submit.
         form$.get(0).submit();
       }

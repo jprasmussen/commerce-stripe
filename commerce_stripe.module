@@ -134,10 +134,15 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
 
   // Add a css class so that we can easily identify Stripe related input fields
   // Do not require the fields
+  //
+  // Remove "name" attributes from Stripe related input elements to
+  // prevent card data to be sent to Drupal server
+  // (see https://stripe.com/docs/tutorials/forms)
   foreach (array_keys($credit_card_fields) as $key) {
     $credit_card_field = &$form['credit_card'][$key];
     $credit_card_field['#attributes']['class'][] = 'stripe';
     $credit_card_field['#required'] = FALSE;
+    $credit_card_field['#post_render'][] = '_commerce_stripe_credit_card_field_remove_name';
   }
 
   // Add the total amount.
@@ -168,6 +173,14 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
   );
 
   return $form;
+}
+
+function _commerce_stripe_credit_card_field_remove_name($content, $element) {
+  $doc = new DOMDocument();
+  $doc->loadHTML($content);
+  $field = $doc->getElementById($element['#id']);
+  $field->removeAttribute('name');
+  return $doc->saveHTML();
 }
 
 /**
