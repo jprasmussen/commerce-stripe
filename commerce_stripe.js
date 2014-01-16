@@ -33,13 +33,35 @@
 
             Stripe.setPublishableKey(settings.stripe.publicKey);
 
-            Stripe.createToken({
+            var card_values = {
               number: $('[id^=edit-commerce-payment-payment-details-credit-card-number]').val(),
               cvc: $('[id^=edit-commerce-payment-payment-details-credit-card-code]').val(),
               exp_month: $('[id^=edit-commerce-payment-payment-details-credit-card-exp-month]').val(),
               exp_year: $('[id^=edit-commerce-payment-payment-details-credit-card-exp-year]').val(),
               name: $('[id^=edit-commerce-payment-payment-details-credit-card-owner]').val()
-            }, Drupal.behaviors.stripe.stripeResponseHandler);
+            };
+
+            // Check if the optional address fields are present in
+            // the form and include them in the token if so.
+            var optional_fields = {
+              address_line1: 'edit-customer-profile-billing-commerce-customer-address-und-0-thoroughfare',
+              address_line2: 'edit-customer-profile-billing-commerce-customer-address-und-0-premise',
+              address_ciy: 'edit-customer-profile-billing-commerce-customer-address-und-0-locality',
+              address_state: 'edit-customer-profile-billing-commerce-customer-address-und-0-administrative-area',
+              address_zip: 'edit-customer-profile-billing-commerce-customer-address-und-0-postal-code',
+              address_country: 'edit-customer-profile-billing-commerce-customer-address-und-0-country'
+            };
+
+            for (var stripe_name in optional_fields) {
+              if (optional_fields.hasOwnProperty(stripe_name)) {
+                var form_input_element = $('[id^=' + optional_fields[stripe_name] + ']');
+                if (form_input_element) {
+                  card_values[stripe_name] = form_input_element.val();
+                }
+              }
+            }
+
+            Stripe.createToken(card_values, Drupal.behaviors.stripe.stripeResponseHandler);
 
             // Prevent the form from submitting with the default action.
             return false;
