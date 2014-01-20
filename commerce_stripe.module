@@ -142,7 +142,7 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
     $credit_card_field = &$form['credit_card'][$key];
     $credit_card_field['#attributes']['class'][] = 'stripe';
     $credit_card_field['#required'] = FALSE;
-    $credit_card_field['#post_render'][] = '_commerce_stripe_credit_card_field_remove_name';
+    $credit_card_field['#after_build'][] = '_commerce_stripe_credit_card_field_remove_name';
   }
 
   // Add the total amount.
@@ -175,13 +175,11 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
   return $form;
 }
 
-function _commerce_stripe_credit_card_field_remove_name($content, $element) {
-  $doc = new DOMDocument();
-  $doc->loadHTML($content);
-  $field = $doc->getElementById($element['#id']);
-  $field->removeAttribute('name');
-  return $doc->saveHTML();
+function _commerce_stripe_credit_card_field_remove_name($element, &$form_state) {
+  unset($element['#name']);
+  return $element;
 }
+
 
 /**
  * Payment method callback: checkout form submission.
