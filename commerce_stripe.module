@@ -72,7 +72,7 @@ function commerce_stripe_settings_form($settings) {
     '#options' => array(
       'CAD' => t('CAD'),
       'EUR' => t('EUR'),
-      'GBP' => t('BGP'),
+      'GBP' => t('GBP'),
       'USD' => t('USD'),
       'AUD' => t('AUD'),
     ),
