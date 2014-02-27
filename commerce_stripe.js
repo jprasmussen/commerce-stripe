@@ -55,7 +55,7 @@
             for (var stripeName in optionalFields) {
               if (optionalFields.hasOwnProperty(stripeName)) {
                 var formInputElement = $('[id^=' + optionalFields[stripeName] + ']');
-                if (formInputElement) {
+                if (formInputElement.length) {
                   cardValues[stripeName] = formInputElement.val();
                 }
               }
