@@ -12,7 +12,7 @@
         $('#commerce-checkout-form-checkout #edit-continue, #commerce-checkout-form-review #edit-continue').live('click', function(event) {
 
           // Prevent the Stripe actions to be triggered if Stripe is not selected.
-          if ($('#edit-commerce-payment-payment-method-commerce-stripecommerce-payment-commerce-stripe').is(':checked')) {
+          if ($("input[value*='commerce_stripe|']").is(':checked')) {
             // Do not fetch the token if cardonfile is enabled and the customer has selected an existing card.
             if ($('.form-item-commerce-payment-payment-details-cardonfile').length > 0 &&
               $("input[type='radio'][name='commerce_payment[payment_details][cardonfile]']:checked").val() != 'new') {
