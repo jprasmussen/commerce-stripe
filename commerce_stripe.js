@@ -9,7 +9,7 @@
       if (settings.stripe.fetched == null) {
         settings.stripe.fetched = true;
 
-        $('#commerce-checkout-form-checkout #edit-continue, #commerce-checkout-form-review #edit-continue').live('click', function(event) {
+        $('#edit-continue').live('click', function(event) {
 
           // Prevent the Stripe actions to be triggered if Stripe is not selected.
           if ($("input[value*='commerce_stripe|']").is(':checked')) {
@@ -83,7 +83,7 @@
         $('.checkout-processing').hide();
       }
       else {
-        var form$ = $("#commerce-checkout-form-checkout, #commerce-checkout-form-review");
+        var form$ = $("#edit-continue").parents("form");
         // Token contains id, last4, and card type.
         var token = response['id'];
         // Insert the token into the form so it gets submitted to the server.
