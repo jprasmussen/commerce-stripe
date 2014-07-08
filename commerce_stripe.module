@@ -253,6 +253,12 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
     }
   }
 
+  // We processed the card on file registration. If the charge is zero, there is nothing else
+  // for us to do.
+  if ($charge['amount'] == 0) {
+    return;
+  }
+
   // We have a card, charge it.
   if (!empty($card_data)) {
     return commerce_stripe_cardonfile_charge($payment_method, $card_data, $order, $charge);
