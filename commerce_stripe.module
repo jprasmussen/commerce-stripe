@@ -49,6 +49,10 @@ function commerce_stripe_commerce_payment_method_info() {
       'charge callback' => 'commerce_stripe_cardonfile_charge',
       'update callback' => 'commerce_stripe_cardonfile_update',
       'delete callback' => 'commerce_stripe_cardonfile_delete',
+      // TODO: Card On File currently requires both, while we really only
+      // implement the second one.
+      'create callback' => 'commerce_stripe_cardonfile_create_form',
+      'create form callback' => 'commerce_stripe_cardonfile_create_form',
     ),
   );
 
@@ -428,6 +432,56 @@ function commerce_stripe_cardonfile_delete($form, &$form_state, $payment_method,
     watchdog('commerce_stripe', 'Following error received when deleting card @stripe_error.', array('@stripe_error' => $e->getMessage()), WATCHDOG_NOTICE);
     return FALSE;
   }
+}
+
+/**
+ * Card on File callback: create credit card form.
+ */
+function commerce_stripe_cardonfile_create_form($form, &$form_state, $op, $card_data) {
+  // Pass along information to the validate and submit handlers.
+  $form_state['card_user'] = user_load($card_data->uid);
+  $form_state['payment_method_instance'] = commerce_payment_method_instance_load($card_data->instance_id);
+
+  $form += commerce_stripe_credit_card_form_build($form_state['payment_method_instance']);
+  // @todo Card is always saved as default, we should probably do this smarter.
+  $form['cardonfile'] = array(
+    '#type' => 'value',
+    '#value' => 'new',
+  );
+  $form['cardonfile_instance_default'] = array(
+    '#type' => 'value',
+    '#value' => 1,
+  );
+  $form['credit_card']['cardonfile_store'] = array(
+    '#type' => 'value',
+    '#value' => 1,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add card'),
+  );
+  return $form;
+}
+
+/**
+ * Form submit handler: create credit card form.
+ */
+function commerce_stripe_cardonfile_create_form_submit($form, &$form_state) {
+  if (!commerce_stripe_load_library()) {
+    return FALSE;
+  }
+  Stripe::setApiKey($form_state['payment_method_instance']['settings']['secret_key']);
+
+  $card_data = commerce_stripe_create_card($form_state['payment_method_instance'], $form_state['card_user']->uid, $form_state['values']['credit_card']['token']);
+  if (empty($card_data)) {
+    form_set_error('credit_card');
+    return FALSE;
+  }
+
+  // Everything happened during the validation, so if we get to this point,
+  // that means everything were okay, so the only thing left is to redirect the
+  // user back to their cards.
+  $form_state['redirect'] = 'user/' . $form_state['card_user']->uid . '/cards';
 }
 
 /**
