@@ -107,6 +107,19 @@ function commerce_stripe_settings_form($settings) {
  * Payment method callback: checkout form.
  */
 function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pane, $order) {
+  $charge = commerce_payment_order_balance($order);
+  return commerce_stripe_credit_card_form_build($payment_method);
+}
+
+/**
+ * Builds a form to be used for filling out credit card data for Stripe.
+ *
+ * @param $payment_method
+ *   Payment method instance.
+ *
+ * @return Form array.
+ */
+function commerce_stripe_credit_card_form_build($payment_method) {
   module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
 
   $credit_card_fields = array(
@@ -119,6 +132,11 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
 
   $form = commerce_payment_credit_card_form($credit_card_fields);
 
+  $form['credit_card']['#type'] = 'container';
+  $form['credit_card']['#attributes']['class'][] = 'stripe';
+  $form['credit_card']['#input'] = TRUE;
+  $form['credit_card']['#element_validate'][] = 'commerce_stripe_credit_card_validate';
+
   // Add a css class so that we can easily identify Stripe related input fields
   // Do not require the fields
   //
@@ -127,21 +145,10 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
   // (see https://stripe.com/docs/tutorials/forms)
   foreach (array_keys($credit_card_fields) as $key) {
     $credit_card_field = &$form['credit_card'][$key];
-    $credit_card_field['#attributes']['class'][] = 'stripe';
+    $credit_card_field['#attributes']['class'][] = 'stripe-' . $key;
     $credit_card_field['#required'] = FALSE;
     $credit_card_field['#post_render'][] = '_commerce_stripe_credit_card_field_remove_name';
   }
-
-  // Add the total amount.
-  $charge = commerce_payment_order_balance($order);
-  $form['total'] = array(
-    '#type' => 'hidden',
-    '#value' => $charge['amount'],
-    '#attributes' => array(
-      'name' => '',
-      'class' => array('stripe-order-total'),
-    ),
-  );
 
   // Set our key to settings array.
   drupal_add_js(array('stripe' => array('publicKey' => $payment_method['settings']['public_key'])), 'setting');
@@ -154,10 +161,35 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
     drupal_get_path('module', 'commerce_stripe') . '/commerce_stripe.js',
   );
 
-  // To display validation errors.
-  $form['errors'] = array(
-    '#type' => 'markup',
-    '#markup' => '<div class="payment-errors"></div>',
+  $form['#payment_method'] = $payment_method;
+
+  // Those are hidden fields that will get populated by stripe.js.
+  // The token.
+  $form['credit_card']['token'] = array(
+    '#type' => 'hidden',
+    '#attributes' => array(
+      'class' => array(
+        'stripe-token',
+      ),
+    ),
+  );
+  // An error code, if any.
+  $form['credit_card']['error'] = array(
+    '#type' => 'hidden',
+    '#attributes' => array(
+      'class' => array(
+        'stripe-error',
+      ),
+    ),
+  );
+  // An error message, if any.
+  $form['credit_card']['error-message'] = array(
+    '#type' => 'hidden',
+    '#attributes' => array(
+      'class' => array(
+        'stripe-error-message',
+      ),
+    ),
   );
 
   return $form;
@@ -166,6 +198,24 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
 function _commerce_stripe_credit_card_field_remove_name($content, $element) {
   $name_pattern = '/\sname\s*=\s*[\'"]?' . preg_quote($element['#name']) . '[\'"]?/';
   return preg_replace($name_pattern, '', $content);
+}
+
+/**
+ * Element validation handler for the credit card form.
+ */
+function commerce_stripe_credit_card_validate($credit_card_form, $form_state, $form) {
+  $token = $credit_card_form['token']['#value'];
+  $error = $credit_card_form['error']['#value'];
+  $error_message = $credit_card_form['error-message']['#value'];
+
+  if (empty($token)) {
+    if (empty($error_message)) {
+      $error_message = 'Unknown error';
+    }
+    form_error($credit_card_form, $error_message);
+
+    watchdog('commerce_stripe', 'Customer card input failed, code: @error_code message: @error_message.', array('@error_code' => $error, '@error_message' => $error_message), WATCHDOG_NOTICE);
+  }
 }
 
 
@@ -196,7 +246,7 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
   $c = array(
     'amount' => $charge['amount'],
     'currency' => $charge['currency_code'],
-    'card' => $_POST['stripeToken'],
+    'card' => $pane_values['credit_card']['token'],
     'description' => t('Order Number: @order_number', array('@order_number' => $order->order_number)),
   );
 
@@ -210,7 +260,7 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
       $account = user_load($order->uid);
       try {
         $customer = Stripe_Customer::create(array(
-          'card' => $_POST['stripeToken'],
+          'card' => $pane_values['credit_card']['token'],
           'email' => $account->mail,
         ));
         $stripe_customer_id = $customer->id;
@@ -228,7 +278,7 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
     else {
       try {
         $customer = Stripe_Customer::retrieve($stripe_customer_id);
-        $response = $customer->cards->create(array('card' => $_POST['stripeToken']));
+        $response = $customer->cards->create(array('card' => $pane_values['credit_card']['token']));
         $stripe_card_id = $response->id;
         // Now both the customer id and card id are available.  Add them both to the charge parameters.
         // The card id is needed so that the customer's default card (which may be different) is not charged instead.
