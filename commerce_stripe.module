@@ -147,9 +147,10 @@ function commerce_stripe_submit_form($payment_method, $pane_values, $checkout_pa
   }
 
   // Add the total amount.
+  $charge = commerce_payment_order_balance($order);
   $form['total'] = array(
     '#type' => 'hidden',
-    '#value' => field_get_items('commerce_order', $order, 'commerce_order_total_amount'),
+    '#value' => $charge['amount'],
     '#attributes' => array(
       'name' => '',
       'class' => array('stripe-order-total'),
