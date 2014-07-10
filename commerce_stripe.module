@@ -9,6 +9,9 @@
 
 define('STRIPE_PUBLIC_KEY', '');
 define('STRIPE_SECRET_KEY', '');
+// Test and live modes.
+define('COMMERCE_STRIPE_MODE_TEST', 'test');
+define('COMMERCE_STRIPE_MODE_LIVE', 'live');
 
 /**
  * Implements hook_libraries_info().
@@ -40,7 +43,7 @@ function commerce_stripe_commerce_payment_method_info() {
   $payment_methods = array();
 
   $payment_methods['commerce_stripe'] = array(
-    'title' => _commerce_stripe_load_setting('display_title', t('Stripe')),
+    'title' => t('Stripe'),
     'description' => t('Stripe payment gateway'),
     'active' => FALSE,
     'terminal' => FALSE,
@@ -70,19 +73,55 @@ function commerce_stripe_commerce_payment_method_info() {
  */
 function commerce_stripe_settings_form($settings) {
   $form = array();
-  $form['secret_key'] = array(
+  $form[COMMERCE_STRIPE_MODE_TEST] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Test API keys'),
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+  );
+  $form[COMMERCE_STRIPE_MODE_TEST]['secret_key'] = array(
     '#type' => 'textfield',
-    '#title' => t('Secret Key'),
-    '#description' => t('Secret API Key. Get your key from https://stripe.com/'),
-    '#default_value' => !empty($settings['secret_key']) ? $settings['secret_key'] : STRIPE_SECRET_KEY,
+    '#title' => t('Secret Key -- Test'),
+    '#description' => t('Secret test mode API Key. Get your key from https://stripe.com/'),
+    '#default_value' => !empty($settings[COMMERCE_STRIPE_MODE_TEST]['secret_key']) ? $settings[COMMERCE_STRIPE_MODE_TEST]['secret_key'] : STRIPE_SECRET_KEY,
     '#required' => TRUE,
   );
-  $form['public_key'] = array(
+  $form[COMMERCE_STRIPE_MODE_TEST]['public_key'] = array(
     '#type' => 'textfield',
-    '#title' => t('Publishable Key'),
-    '#description' => t('Publishable API Key. Get your key from https://stripe.com/'),
-    '#default_value' => !empty($settings['public_key']) ? $settings['public_key'] : STRIPE_PUBLIC_KEY,
+    '#title' => t('Publishable Key -- Test'),
+    '#description' => t('Publishable test mode API Key. Get your key from https://stripe.com/'),
+    '#default_value' => !empty($settings[COMMERCE_STRIPE_MODE_TEST]['public_key']) ? $settings[COMMERCE_STRIPE_MODE_TEST]['public_key'] : STRIPE_PUBLIC_KEY,
     '#required' => TRUE,
+  );
+  
+  $form[COMMERCE_STRIPE_MODE_LIVE] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Live API keys'),
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+  );
+  $form[COMMERCE_STRIPE_MODE_LIVE]['secret_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Secret Key -- Live'),
+    '#description' => t('Secret live mode API Key. Get your key from https://stripe.com/'),
+    '#default_value' => !empty($settings[COMMERCE_STRIPE_MODE_LIVE]['secret_key']) ? $settings[COMMERCE_STRIPE_MODE_LIVE]['secret_key'] : STRIPE_SECRET_KEY,
+    '#required' => TRUE,
+  );
+  $form[COMMERCE_STRIPE_MODE_LIVE]['public_key'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Publishable Key -- Live'),
+    '#description' => t('Publishable live mode API Key. Get your key from https://stripe.com/'),
+    '#default_value' => !empty($settings[COMMERCE_STRIPE_MODE_LIVE]['public_key']) ? $settings[COMMERCE_STRIPE_MODE_LIVE]['public_key'] : STRIPE_PUBLIC_KEY,
+    '#required' => TRUE,
+  );
+  $form['mode'] = array(
+    '#type' => 'radios',
+    '#title' => t('Transaction mode'),
+    '#options' => array(
+      COMMERCE_STRIPE_MODE_TEST => t('Test'),
+      COMMERCE_STRIPE_MODE_LIVE => t('Live'),
+    ),
+    '#default_value' => (isset($settings['mode']) ? $settings['mode'] : COMMERCE_STRIPE_MODE_TEST),
   );
   $form['display_title'] = array(
     '#type' => 'textfield',
@@ -154,8 +193,11 @@ function commerce_stripe_credit_card_form_build($payment_method) {
     $credit_card_field['#post_render'][] = '_commerce_stripe_credit_card_field_remove_name';
   }
 
-  // Set our key to settings array.
-  drupal_add_js(array('stripe' => array('publicKey' => $payment_method['settings']['public_key'])), 'setting');
+  // Send our key to the JS-side settings array.
+  
+  $mode = $payment_method['settings']['mode'];
+  $public_key = $payment_method['settings'][$mode]['public_key'];
+  drupal_add_js(array('stripe' => array('publicKey' => $public_key)), 'setting');
 
   // Include the stripe.js from stripe.com.
   drupal_add_js('https://js.stripe.com/v1/', 'external');
@@ -231,7 +273,8 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
     drupal_set_message(t('Error making the payment. Please contact shop admin to proceed.'), 'error');
     return FALSE;
   }
-  Stripe::setApiKey($payment_method['settings']['secret_key']);
+  $mode = $payment_method['settings']['mode'];
+  Stripe::setApiKey($payment_method['settings'][$mode]['secret_key']);
 
   // If instructed to do so, try using the specified card on file.
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['cardonfile']) {
@@ -307,27 +350,35 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
 function commerce_stripe_commerce_payment_method_info_alter(&$payment_methods) {
   if (isset($payment_methods['commerce_stripe'])) {
     $settings = _commerce_stripe_load_settings();
-
-    if (empty($settings['secret_key']) || empty($settings['public_key'])) {
-      if (user_access('administer payment methods')) {
-        drupal_set_message('Stripe secret and public key are required in order to use Stripe payment method. See README.txt for instructions.', 'warning');
+    $default_rule = rules_config_load('commerce_payment_commerce_stripe');
+    if ($default_rule->active) {
+      $mode = (isset($settings['mode']) ? $settings['mode'] : NULL);
+      if (empty($mode)) {
+        if (user_access('administer payment methods')) {
+          drupal_set_message('Stripe requires a transaction mode (live or test) to be selected to use the Stripe payment method. See README.txt for instructions.', 'warning');
+        }    
+      }
+      elseif (empty($settings[$mode]['secret_key']) || empty($settings[$mode]['public_key'])) {
+        if (user_access('administer payment methods')) {
+          drupal_set_message('Stripe secret and public key are required in order to use Stripe payment method. See README.txt for instructions.', 'warning');
+        }
       }
     }
   }
 }
 
-function _commerce_stripe_load_settings($name = NULL) {
+function _commerce_stripe_load_settings($rule_name = NULL) {
   static $settings = array();
 
   if (!empty($settings)) {
     return $settings;
   }
-
-  if (commerce_payment_method_load('commerce_stripe') && rules_config_load('commerce_payment_commerce_stripe')) {
+  $default_rule = rules_config_load('commerce_payment_commerce_stripe');
+  if (commerce_payment_method_load('commerce_stripe') && $default_rule && $default_rule->active) {
     $commerce_stripe_payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
   }
   
-  if (isset($name) && rules_config_load('commerce_payment_commerce_stripe')) {
+  if (commerce_payment_method_load('commerce_stripe') && isset($rule_name) && rules_config_load($rule_name)) {
     $commerce_stripe_payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
   }
 
@@ -338,8 +389,8 @@ function _commerce_stripe_load_settings($name = NULL) {
   return $settings;
 }
 
-function _commerce_stripe_load_setting($name, $default_value = NULL) {
-  $settings = _commerce_stripe_load_settings($name);
+function _commerce_stripe_load_setting($name, $rule_name = NULL, $default_value = NULL) {
+  $settings = _commerce_stripe_load_settings($rule_name);
   return isset($settings[$name]) ? $settings[$name] : $default_value;
 }
 
@@ -355,7 +406,8 @@ function commerce_stripe_cardonfile_charge($payment_method, $card_data, $order, 
   list($customer_id, $card_id) = explode('|', $card_data->remote_id);
 
   // Assemble charge parameters.
-  Stripe::setApiKey($payment_method['settings']['secret_key']);
+  $mode = $payment_method['settings']['mode'];
+  Stripe::setApiKey($payment_method['settings'][$mode]['secret_key']);
   $c = array(
     'amount' => $charge['amount'],
     'currency' => $charge['currency_code'],
@@ -400,7 +452,8 @@ function commerce_stripe_cardonfile_update($form, &$form_state, $payment_method,
   // Fetch the customer id and card id from $card_data->remote_id
   list($customer_id, $card_id) = explode('|', $card_data->remote_id);
 
-  Stripe::setApiKey($payment_method['settings']['secret_key']);
+  $mode = $payment_method['settings']['mode'];
+  Stripe::setApiKey($payment_method['settings'][$mode]['secret_key']);
   try {
     $customer = Stripe_Customer::retrieve($customer_id);
     $card = $customer->cards->retrieve($card_id);
@@ -427,7 +480,8 @@ function commerce_stripe_cardonfile_delete($form, &$form_state, $payment_method,
   // Fetch the customer id and card id from $card_data->remote_id
   list($customer_id, $card_id) = explode('|', $card_data->remote_id);
 
-  Stripe::setApiKey($payment_method['settings']['secret_key']);
+  $mode = $payment_method['settings']['mode'];
+  Stripe::setApiKey($payment_method['settings'][$mode]['secret_key']);
   try {
     $customer = Stripe_Customer::retrieve($customer_id);
     $customer->cards->retrieve($card_id)->delete();
@@ -476,7 +530,9 @@ function commerce_stripe_cardonfile_create_form_submit($form, &$form_state) {
   if (!commerce_stripe_load_library()) {
     return FALSE;
   }
-  Stripe::setApiKey($form_state['payment_method_instance']['settings']['secret_key']);
+  
+  $mode = $form_state['payment_method_instance']['settings']['mode'];
+  Stripe::setApiKey($form_state['payment_method_instance']['settings'][$mode]['secret_key']);
 
   $card_data = commerce_stripe_create_card($form_state['payment_method_instance'], $form_state['card_user']->uid, $form_state['values']['credit_card']['token']);
   if (empty($card_data)) {
