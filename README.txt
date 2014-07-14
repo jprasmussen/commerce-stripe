@@ -30,7 +30,10 @@ CONFIGURING PAYMENT METHOD
 
 2. Insert your API keys at the Stripe configuration page
    admin/commerce/config/payment-methods/manage/commerce_payment_commerce_stripe
-   Remember to test the functionality with the test keys before going live!
+   
+3. You can choose between Test and Live mode -- your Stripe account has 
+   separate pairs of API keys for each mode. Test the functionality with
+   test mode keys before going live!
 
 
 CREDITS
