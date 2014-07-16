@@ -93,7 +93,7 @@ function commerce_stripe_settings_form($settings) {
     '#default_value' => !empty($settings[COMMERCE_STRIPE_MODE_TEST]['public_key']) ? $settings[COMMERCE_STRIPE_MODE_TEST]['public_key'] : STRIPE_PUBLIC_KEY,
     '#required' => TRUE,
   );
-  
+
   $form[COMMERCE_STRIPE_MODE_LIVE] = array(
     '#type' => 'fieldset',
     '#title' => t('Live API keys'),
@@ -194,7 +194,7 @@ function commerce_stripe_credit_card_form_build($payment_method) {
   }
 
   // Send our key to the JS-side settings array.
-  
+
   $mode = $payment_method['settings']['mode'];
   $public_key = $payment_method['settings'][$mode]['public_key'];
   drupal_add_js(array('stripe' => array('publicKey' => $public_key)), 'setting');
@@ -351,12 +351,12 @@ function commerce_stripe_commerce_payment_method_info_alter(&$payment_methods) {
   if (isset($payment_methods['commerce_stripe'])) {
     $settings = _commerce_stripe_load_settings();
     $default_rule = rules_config_load('commerce_payment_commerce_stripe');
-    if ($default_rule->active) {
+    if ($default_rule && $default_rule->active) {
       $mode = (isset($settings['mode']) ? $settings['mode'] : NULL);
       if (empty($mode)) {
         if (user_access('administer payment methods')) {
           drupal_set_message('Stripe requires a transaction mode (live or test) to be selected to use the Stripe payment method. See README.txt for instructions.', 'warning');
-        }    
+        }
       }
       elseif (empty($settings[$mode]['secret_key']) || empty($settings[$mode]['public_key'])) {
         if (user_access('administer payment methods')) {
@@ -377,7 +377,7 @@ function _commerce_stripe_load_settings($rule_name = NULL) {
   if (commerce_payment_method_load('commerce_stripe') && $default_rule && $default_rule->active) {
     $commerce_stripe_payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
   }
-  
+
   if (commerce_payment_method_load('commerce_stripe') && isset($rule_name) && rules_config_load($rule_name)) {
     $commerce_stripe_payment_method = commerce_payment_method_instance_load('commerce_stripe|commerce_payment_commerce_stripe');
   }
@@ -530,7 +530,7 @@ function commerce_stripe_cardonfile_create_form_submit($form, &$form_state) {
   if (!commerce_stripe_load_library()) {
     return FALSE;
   }
-  
+
   $mode = $form_state['payment_method_instance']['settings']['mode'];
   Stripe::setApiKey($form_state['payment_method_instance']['settings'][$mode]['secret_key']);
 
@@ -591,6 +591,9 @@ function commerce_stripe_customer_id($uid, $instance_id) {
  *   The stripe card token, returned by stripe.js
  */
 function commerce_stripe_create_card($payment_method, $uid, $token) {
+  $mode = $payment_method['settings']['mode'];
+  Stripe::setApiKey($payment_method['settings'][$mode]['secret_key']);
+
   // If there is no existing customer id, use the Stripe form token to create one.
   $stripe_customer_id = commerce_stripe_customer_id($uid, $payment_method['instance_id']);
   if (!$stripe_customer_id) {
@@ -600,8 +603,9 @@ function commerce_stripe_create_card($payment_method, $uid, $token) {
         'card' => $token,
         'email' => $account->mail,
       ));
+      watchdog('commerce_stripe', 'Stripe Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $customer->id, '@uid' => $uid));
       $stripe_customer_id = $customer->id;
-      $card = $customer->cards[0];
+      $card = $customer->cards->data[0];
     }
     catch (Exception $e) {
       drupal_set_message(t('We received the following error processing your card: %error. Please enter your information again or try a different card.', array('%error' => $e->getMessage())), 'error');
@@ -624,7 +628,6 @@ function commerce_stripe_create_card($payment_method, $uid, $token) {
 
   // Store the Stripe customer and card ids in the remote id field of {commerce_cardonfile} table
   $remote_id = (string) $stripe_customer_id . '|' . (string) $card->id;
-
   // Populate and save the card
   $card_data = commerce_cardonfile_new();
   $card_data->uid = $uid;
@@ -638,6 +641,7 @@ function commerce_stripe_create_card($payment_method, $uid, $token) {
   $card_data->card_exp_year = $card->exp_year;
   $card_data->status = 1;
   commerce_cardonfile_save($card_data);
-  watchdog('commerce_stripe', 'Stripe Customer Profile @profile_id created and saved to user @uid.', array('@profile_id' => (string) $customer->id, '@uid' => $uid));
+  watchdog('commerce_stripe', 'Stripe Card @card_id created for Customer Profile @customer_id and saved to user @uid.', array('@card_id' => $card->id, '@customer_id' => $stripe_customer_id, '@uid' => $uid));
+
   return $card_data;
 }
