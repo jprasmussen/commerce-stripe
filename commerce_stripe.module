@@ -253,6 +253,15 @@ function commerce_stripe_credit_card_validate($credit_card_form, $form_state, $f
   $token = $credit_card_form['token']['#value'];
   $error = $credit_card_form['error']['#value'];
   $error_message = $credit_card_form['error-message']['#value'];
+  // We can't just fail here -- we need to make sure we aren't using an
+  // already-stored card. Unfortunately that is a bit tricky.
+  $parents = $credit_card_form['#parents'];
+  array_pop($parents);
+  $parents[] = 'cardonfile';
+  $cardonfile = drupal_array_get_nested_value($form_state['values'], $parents);
+  if (!empty($cardonfile) && $cardonfile != 'new') {
+    return;
+  }
 
   if (empty($token)) {
     if (empty($error_message)) {
@@ -275,7 +284,6 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
   }
   $mode = $payment_method['settings']['mode'];
   Stripe::setApiKey($payment_method['settings'][$mode]['secret_key']);
-
   // If instructed to do so, try using the specified card on file.
   if (module_exists('commerce_cardonfile') && $payment_method['settings']['cardonfile']) {
     // Existing card.
@@ -286,9 +294,8 @@ function commerce_stripe_submit_form_submit($payment_method, $pane_form, $pane_v
         return FALSE;
       }
     }
-
     // New card, register it.
-    if (!empty($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store']) {
+    elseif (!empty($pane_values['credit_card']['cardonfile_store']) && $pane_values['credit_card']['cardonfile_store']) {
       $card_data = commerce_stripe_create_card($payment_method, $order->uid, $pane_values['credit_card']['token']);
       if (empty($card_data)) {
         return FALSE;
