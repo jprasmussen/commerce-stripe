@@ -262,8 +262,7 @@ function commerce_stripe_credit_card_validate($credit_card_form, $form_state, $f
   if (!empty($cardonfile) && $cardonfile != 'new') {
     return;
   }
-
-  if (empty($token)) {
+  elseif (empty($token)) {
     if (empty($error_message)) {
       $error_message = 'Unknown error';
     }
