@@ -640,7 +640,7 @@ function commerce_stripe_create_card($payment_method, $uid, $token) {
   $card_data->payment_method = $payment_method['method_id'];
   $card_data->instance_id = $payment_method['instance_id'];
   $card_data->remote_id = $remote_id;
-  $card_data->card_type = $card->type;
+  $card_data->card_type = commerce_stripe_brand_to_type($card->brand);
   $card_data->card_name = $card->name;
   $card_data->card_number = $card->last4;
   $card_data->card_exp_month = $card->exp_month;
@@ -650,4 +650,22 @@ function commerce_stripe_create_card($payment_method, $uid, $token) {
   watchdog('commerce_stripe', 'Stripe Card @card_id created for Customer Profile @customer_id and saved to user @uid.', array('@card_id' => $card->id, '@customer_id' => $stripe_customer_id, '@uid' => $uid));
 
   return $card_data;
+}
+
+/**
+ * Convert the brand name returned by the Stripe API to a card type machine
+ *   name supported by commerce_payment.
+ *
+ * @param string $brand
+ */
+function commerce_stripe_brand_to_type($brand) {
+  module_load_include('inc', 'commerce_payment', 'includes/commerce_payment.credit_card');
+  $credit_card_types = commerce_payment_credit_card_types();
+  $key = array_search($brand, $credit_card_types);
+  if ($key !== FALSE) {
+    return $key;
+  }
+  else {
+    return '';
+  }
 }
