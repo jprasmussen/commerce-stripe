@@ -562,6 +562,7 @@ function commerce_stripe_load_library() {
     return FALSE;
   }
   else {
+    Stripe::setApiVersion("2015-02-16");
     return TRUE;
   }
 }
